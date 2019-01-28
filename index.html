@@ -11,8 +11,8 @@
     </style>
   </head>
   <body>
-    <div id="map" style="width:100%;height:850px;"></div>
-    <p>
+    <div id="map" style="width:100%;height:100%;"></div>
+    <!-- <p>
       <input
         type="checkbox"
         id="chkUseDistrict"
@@ -25,15 +25,21 @@
       교통정보 보기
       <input type="checkbox" id="chkBicycle" onclick="setOverlayMapTypeId()" />
       자전거도로 정보 보기
-    </p>
-    <script
+    </p> -->
+    <section
+      style="position: absolute; bottom: 0px; z-index: 1; background: rgba(255, 255, 255, 0.5)"
+    >
+      <div>법정동: <span id="B-dong"></span></div>
+      <div>행정동: <span id="H-dong"></span></div>
+    </section>
+    <!-- <script
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtMTOSvTiNH3HGT7VSaaIRBY1e3Re7D3g"
       async
       defer
-    ></script>
+    ></script> -->
     <script
       type="text/javascript"
-      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=6795e3ba76d0ddbb62e2368e410f74cb"
+      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=6795e3ba76d0ddbb62e2368e410f74cb&libraries=services"
     ></script>
     <script type="text/javascript" src="/dong2.js"></script>
     <script type="text/javascript" src="/gu.js"></script>
@@ -67,29 +73,50 @@
       const mapContainer = document.getElementById("map"), // 지도를 표시할 div
         mapOption = {
           center: new daum.maps.LatLng(37.57319, 126.96658), // 지도의 중심좌표
-          level: 14 // 지도의 확대 레벨
+          level: 12 // 지도의 확대 레벨
           //   level: 7 // 지도의 확대 레벨
         };
 
       const map = new daum.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
+      //   const geocoder = new google.maps.Geocoder();
+      //   console.log(daum.maps);
+      const geocoder = new daum.maps.services.Geocoder();
       daum.maps.event.addListener(map, "click", function(e) {
         // alert(mouseEvent.latLng instanceof daum.maps.LatLng); // true
         console.log(e.latLng);
         const lat = e.latLng.getLat();
         const lng = e.latLng.getLng();
-        geocoder.geocode({ location: { lat, lng } }, (arr, status) => {
-          if (arr.length > 0) {
-            const tags = arr
-              .find(a => a.types.includes("sublocality"))
-              .address_components.map(a => `#${a.long_name}`)
-              .join(" ");
-            console.log(tags, arr);
-          } else {
-            console.log(arr, status);
-          }
+        geocoder.coord2RegionCode(lng, lat, (res, status) => {
+          //   console.log(res, status);
+          res.forEach(r => {
+            let {
+              region_1depth_name,
+              region_2depth_name,
+              region_3depth_name,
+              region_4depth_name,
+              region_type
+            } = r;
+            document.querySelector(`#${region_type}-dong`).innerHTML = `
+                #${region_1depth_name},
+                #${region_2depth_name},
+                #${region_3depth_name},
+                #${region_4depth_name}
+              `;
+          });
         });
+        // geocoder.geocode({ location: { lat, lng } }, (arr, status) => {
+        //   if (arr.length > 0) {
+        //     const tags = arr
+        //       .find(a => a.types.includes("sublocality"))
+        //       .address_components.map(a => `#${a.long_name}`)
+        //       .join(" ");
+        //     console.log(tags, arr);
+        //   } else {
+        //     console.log(arr, status);
+        //   }
+        // });
       });
-      const geocoder = new google.maps.Geocoder();
+
       daum.maps.event.addListener(map, "idle", function() {
         const level = map.getLevel();
         const mapBounds = map.getBounds();
