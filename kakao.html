@@ -1,0 +1,229 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>지도 타입 바꾸기2</title>
+    <style>
+      .label {
+        background-color: rgba(228, 76, 241, 0.5);
+        border-radius: 5px;
+        padding: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map" style="width:100%;height:100%;"></div>
+    <!-- <p>
+      <input
+        type="checkbox"
+        id="chkUseDistrict"
+        onclick="setOverlayMapTypeId()"
+      />
+      지적편집도 정보 보기
+      <input type="checkbox" id="chkTerrain" onclick="setOverlayMapTypeId()" />
+      지형정보 보기
+      <input type="checkbox" id="chkTraffic" onclick="setOverlayMapTypeId()" />
+      교통정보 보기
+      <input type="checkbox" id="chkBicycle" onclick="setOverlayMapTypeId()" />
+      자전거도로 정보 보기
+    </p> -->
+    <section
+      style="position: absolute; bottom: 0px; z-index: 1; background: rgba(255, 255, 255, 0.5)"
+    >
+      <div>법정동: <span id="B-dong"></span></div>
+      <div>행정동: <span id="H-dong"></span></div>
+    </section>
+    <!-- <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtMTOSvTiNH3HGT7VSaaIRBY1e3Re7D3g"
+      async
+      defer
+    ></script> -->
+    <script
+      type="text/javascript"
+      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=6795e3ba76d0ddbb62e2368e410f74cb&libraries=services"
+    ></script>
+    <script type="text/javascript" src="./dong2.js"></script>
+    <script type="text/javascript" src="./gu.js"></script>
+    <script type="text/javascript" src="./do.js"></script>
+    <script type="text/javascript" src="./city.js"></script>
+    <script>
+      const level7 = dong.map(marker => {
+        return new daum.maps.CustomOverlay({
+          position: new daum.maps.LatLng(marker.lat, marker.lng),
+          content: `<div class ="label">#${marker.label}</div>`
+        });
+      });
+      const level9 = gu.map(marker => {
+        return new daum.maps.CustomOverlay({
+          position: new daum.maps.LatLng(marker.lat, marker.lng),
+          content: `<div class ="label">#${marker.label}</div>`
+        });
+      });
+      const level10 = cities.map(marker => {
+        return new daum.maps.CustomOverlay({
+          position: new daum.maps.LatLng(marker.lat - 0.02, marker.lng),
+          content: `<div class ="label">#${marker.label}</div>`
+        });
+      });
+      const level12 = dooo.map(marker => {
+        return new daum.maps.CustomOverlay({
+          position: new daum.maps.LatLng(marker.lat, marker.lng),
+          content: `<div class ="label">#${marker.label}</div>`
+        });
+      });
+      const mapContainer = document.getElementById("map"), // 지도를 표시할 div
+        mapOption = {
+          center: new daum.maps.LatLng(37.57319, 126.96658), // 지도의 중심좌표
+          level: 12 // 지도의 확대 레벨
+          //   level: 7 // 지도의 확대 레벨
+        };
+
+      const map = new daum.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
+      //   const geocoder = new google.maps.Geocoder();
+      //   console.log(daum.maps);
+      const geocoder = new daum.maps.services.Geocoder();
+      daum.maps.event.addListener(map, "click", function(e) {
+        // alert(mouseEvent.latLng instanceof daum.maps.LatLng); // true
+        console.log(e.latLng);
+        const lat = e.latLng.getLat();
+        const lng = e.latLng.getLng();
+        geocoder.coord2RegionCode(lng, lat, (res, status) => {
+          //   console.log(res, status);
+          res.forEach(r => {
+            let {
+              region_1depth_name,
+              region_2depth_name,
+              region_3depth_name,
+              region_4depth_name,
+              region_type
+            } = r;
+            document.querySelector(`#${region_type}-dong`).innerHTML = `
+                #${region_1depth_name},
+                #${region_2depth_name},
+                #${region_3depth_name},
+                #${region_4depth_name}
+              `;
+          });
+        });
+        // geocoder.geocode({ location: { lat, lng } }, (arr, status) => {
+        //   if (arr.length > 0) {
+        //     const tags = arr
+        //       .find(a => a.types.includes("sublocality"))
+        //       .address_components.map(a => `#${a.long_name}`)
+        //       .join(" ");
+        //     console.log(tags, arr);
+        //   } else {
+        //     console.log(arr, status);
+        //   }
+        // });
+      });
+
+      daum.maps.event.addListener(map, "idle", function() {
+        const level = map.getLevel();
+        const mapBounds = map.getBounds();
+        console.log(level);
+        switch (level) {
+          case 13:
+          case 12: {
+            level12.forEach(element => {
+              if (mapBounds.contain(element.getPosition())) {
+                element.setMap(map);
+              } else {
+                element.setMap(null);
+              }
+            });
+            level10.forEach(element => element.setMap(null));
+            break;
+          }
+          case 11:
+          case 10: {
+            level10.forEach(element => {
+              if (mapBounds.contain(element.getPosition())) {
+                element.setMap(map);
+              } else {
+                element.setMap(null);
+              }
+            });
+            level9.forEach(element => element.setMap(null));
+            level12.forEach(element => element.setMap(null));
+            break;
+          }
+          case 9:
+          case 8: {
+            level9.forEach(element => {
+              if (mapBounds.contain(element.getPosition())) {
+                element.setMap(map);
+              } else {
+                element.setMap(null);
+              }
+            });
+            level10.forEach(element => element.setMap(null));
+            level7.forEach(element => element.setMap(null));
+            break;
+          }
+          case 7:
+          case 6:
+          case 5:
+          case 4:
+          case 3:
+          case 2:
+          case 1: {
+            level7.forEach(element => {
+              if (mapBounds.contain(element.getPosition())) {
+                element.setMap(map);
+              } else {
+                element.setMap(null);
+              }
+            });
+            level9.forEach(element => element.setMap(null));
+            break;
+          }
+        }
+      });
+      //   daum.maps.event.addListener(map, "zoom_changed", function() {});
+      // 지도 타입 정보를 가지고 있을 객체입니다
+      // map.addOverlayMapTypeId 함수로 추가된 지도 타입은
+      // 가장 나중에 추가된 지도 타입이 가장 앞에 표시됩니다
+      // 이 예제에서는 지도 타입을 추가할 때 지적편집도, 지형정보, 교통정보, 자전거도로 정보 순으로 추가하므로
+      // 자전거 도로 정보가 가장 앞에 표시됩니다
+      const mapTypes = {
+        terrain: daum.maps.MapTypeId.TERRAIN,
+        traffic: daum.maps.MapTypeId.TRAFFIC,
+        bicycle: daum.maps.MapTypeId.BICYCLE,
+        useDistrict: daum.maps.MapTypeId.USE_DISTRICT
+      };
+
+      // // 체크 박스를 선택하면 호출되는 함수입니다
+      function setOverlayMapTypeId() {
+        const chkTerrain = document.getElementById("chkTerrain"),
+          chkTraffic = document.getElementById("chkTraffic"),
+          chkBicycle = document.getElementById("chkBicycle"),
+          chkUseDistrict = document.getElementById("chkUseDistrict");
+
+        // 지도 타입을 제거합니다
+        for (const type in mapTypes) {
+          map.removeOverlayMapTypeId(mapTypes[type]);
+        }
+
+        // 지적편집도정보 체크박스가 체크되어있으면 지도에 지적편집도정보 지도타입을 추가합니다
+        if (chkUseDistrict.checked) {
+          map.addOverlayMapTypeId(mapTypes.useDistrict);
+        }
+
+        // 지형정보 체크박스가 체크되어있으면 지도에 지형정보 지도타입을 추가합니다
+        if (chkTerrain.checked) {
+          map.addOverlayMapTypeId(mapTypes.terrain);
+        }
+
+        // 교통정보 체크박스가 체크되어있으면 지도에 교통정보 지도타입을 추가합니다
+        if (chkTraffic.checked) {
+          map.addOverlayMapTypeId(mapTypes.traffic);
+        }
+
+        // 자전거도로정보 체크박스가 체크되어있으면 지도에 자전거도로정보 지도타입을 추가합니다
+        if (chkBicycle.checked) {
+          map.addOverlayMapTypeId(mapTypes.bicycle);
+        }
+      }
+    </script>
+  </body>
+</html>
